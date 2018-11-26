@@ -1,5 +1,10 @@
 package com.ignited.login;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.JsonAdapter;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -19,6 +24,7 @@ public class NaverLogin {
     private static final String KEYS = "https://nid.naver.com/login/ext/keys.nhn";
     private static final String LOGIN = "https://nid.naver.com/nidlogin.login";
     private static final String LOGOUT = "https://nid.naver.com/nidlogin.logout";
+
     private String id;
     private String password;
 
@@ -44,6 +50,7 @@ public class NaverLogin {
             return false;
         }
         if(res == 200){
+            loginCookies = null;
             return true;
         }else {
             return false;
@@ -126,6 +133,10 @@ public class NaverLogin {
         return true;
     }
 
+    public boolean isLogin(){
+        return loginCookies != null;
+    }
+
     public String getChptchaURL() {
         return CAPTCHA + chptchakey;
     }
@@ -145,5 +156,37 @@ public class NaverLogin {
 
     public Map<String, String> getLoginCookies() {
         return loginCookies;
+    }
+
+    public boolean write(String path){
+        if(!isLogin()) throw new IllegalStateException("Not Login");
+        File file = new File(path);
+        try(FileWriter writer = new FileWriter(file)) {
+            new GsonBuilder().setExclusionStrategies(new ExclusionStrategy() {
+                @Override
+                public boolean shouldSkipField(FieldAttributes field) {
+                    return field.getName().equals("chptchakey")
+                            || field.getName().equals("onCaptcha");
+                }
+
+                @Override
+                public boolean shouldSkipClass(Class<?> aClass) {
+                    return false;
+                }
+            }).create().toJson(this, writer);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    public static NaverLogin read(String path) throws IOException {
+        File file = new File(path);
+        try (FileReader writer = new FileReader(file)){
+            return new Gson().fromJson(writer, NaverLogin.class);
+        }
     }
 }

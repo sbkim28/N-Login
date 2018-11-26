@@ -16,6 +16,10 @@ public class Main {
 
     // example
     public static void main(String[] args){
+
+
+
+
         int attempt = 0;
         Map<String, String> loginCookies = null;
         NaverLogin login;
@@ -64,5 +68,6 @@ public class Main {
         if(loginCookies == null) return;
 
         System.out.println("LOGOUT : " + login.logout());
+
     }
 }
